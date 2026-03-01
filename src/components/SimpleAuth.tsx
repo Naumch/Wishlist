@@ -12,7 +12,7 @@ const SimpleAuth: React.FC = () => {
   const handleLogin = async (values: { email: string; password: string }) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
@@ -33,7 +33,7 @@ const SimpleAuth: React.FC = () => {
   }) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
