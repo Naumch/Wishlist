@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Row,
@@ -12,56 +12,37 @@ import {
   Modal,
   Form,
   Input,
-  InputNumber,
-  Select,
-  List,
-  Avatar,
-  Divider,
   message,
 } from "antd";
-import {
-  ArrowLeftOutlined,
-  PlusOutlined,
-  SendOutlined,
-} from "@ant-design/icons";
+import { ArrowLeftOutlined, PlusOutlined } from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   fetchItemsRequest,
-  fetchCommentsRequest,
-  addCommentRequest,
-  fetchCategoriesRequest,
   createItemRequest,
-} from "../store/slices/wishlistSlce";
+} from "../store/slices/itemSlice";
 import ItemCard from "../components/ItemCard";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
-const { Option } = Select;
 
-const WishlistDetail: React.FC = () => {
+const WishlistDetail = () => {
   const { id } = useParams<{ id: string }>();
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { currentWishlist, items, categories, comments, loading } =
-    useAppSelector((state) => state.wishlist);
+  const { currentWishlist, requests } = useAppSelector(
+    (state) => state.wishlist,
+  );
+  const { items } = useAppSelector((state) => state.items);
 
   const [isItemModalVisible, setIsItemModalVisible] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [commentText, setCommentText] = useState("");
   const [itemForm] = Form.useForm();
 
   useEffect(() => {
     if (id) {
       dispatch(fetchItemsRequest(id));
-      dispatch(fetchCategoriesRequest());
     }
   }, [id, dispatch]);
-
-  useEffect(() => {
-    if (selectedItem) {
-      dispatch(fetchCommentsRequest(selectedItem.id));
-    }
-  }, [selectedItem, dispatch]);
 
   const handleCreateItem = async (values: any) => {
     if (!id) return;
@@ -83,24 +64,7 @@ const WishlistDetail: React.FC = () => {
     message.success("Подарок добавлен в список");
   };
 
-  const handleCommentSubmit = () => {
-    if (!selectedItem || !commentText.trim()) return;
-
-    // Здесь нужно получить текущего пользователя из auth
-    const userId = "current-user-id"; // Замените на реальный ID
-
-    dispatch(
-      addCommentRequest({
-        itemId: selectedItem.id,
-        content: commentText,
-        userId,
-      }),
-    );
-
-    setCommentText("");
-  };
-
-  if (loading && !currentWishlist) {
+  if (requests.fetchAll.loading && !currentWishlist) {
     return (
       <div style={{ textAlign: "center", padding: 50 }}>
         <Spin size="large" />
@@ -130,9 +94,6 @@ const WishlistDetail: React.FC = () => {
           <Card>
             <Paragraph>{currentWishlist?.description}</Paragraph>
             <Space>
-              {currentWishlist?.occasion && (
-                <Tag color="blue">Повод: {currentWishlist.occasion}</Tag>
-              )}
               {currentWishlist?.event_date && (
                 <Tag color="green">
                   Дата:{" "}
@@ -158,7 +119,7 @@ const WishlistDetail: React.FC = () => {
 
         {items.map((item) => (
           <Col xs={24} sm={12} md={8} key={item.id}>
-            <ItemCard item={item} onCommentClick={setSelectedItem} />
+            <ItemCard item={item} />
           </Col>
         ))}
 
@@ -181,56 +142,6 @@ const WishlistDetail: React.FC = () => {
         )}
       </Row>
 
-      {/* Модальное окно для комментариев */}
-      <Modal
-        title={`Комментарии к подарку: ${selectedItem?.title}`}
-        open={!!selectedItem}
-        onCancel={() => setSelectedItem(null)}
-        footer={null}
-        width={600}
-      >
-        {selectedItem && (
-          <>
-            <List
-              dataSource={comments[selectedItem.id] || []}
-              renderItem={(comment: any) => (
-                <List.Item>
-                  <List.Item.Meta
-                    avatar={<Avatar src={comment.profile?.avatar_url} />}
-                    title={
-                      comment.profile?.full_name || comment.profile?.username
-                    }
-                    description={comment.content}
-                  />
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    {new Date(comment.created_at).toLocaleString()}
-                  </Text>
-                </List.Item>
-              )}
-            />
-
-            <Divider />
-
-            <Space.Compact style={{ width: "100%" }}>
-              <TextArea
-                rows={2}
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Напишите комментарий..."
-              />
-              <Button
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={handleCommentSubmit}
-              >
-                Отправить
-              </Button>
-            </Space.Compact>
-          </>
-        )}
-      </Modal>
-
-      {/* Модальное окно для добавления подарка */}
       <Modal
         title="Добавить подарок"
         open={isItemModalVisible}
@@ -250,49 +161,8 @@ const WishlistDetail: React.FC = () => {
             <TextArea rows={3} placeholder="Подробное описание" />
           </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="price" label="Цена">
-                <InputNumber
-                  style={{ width: "100%" }}
-                  placeholder="10000"
-                  min={0}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="currency" label="Валюта" initialValue="RUB">
-                <Select>
-                  <Option value="RUB">₽</Option>
-                  <Option value="USD">$</Option>
-                  <Option value="EUR">€</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-
           <Form.Item name="link" label="Ссылка на товар">
             <Input placeholder="https://..." />
-          </Form.Item>
-
-          <Form.Item name="priority" label="Приоритет">
-            <Select placeholder="Выберите приоритет">
-              <Option value={1}>⭐ Низкий</Option>
-              <Option value={2}>⭐⭐ Средний</Option>
-              <Option value={3}>⭐⭐⭐ Высокий</Option>
-              <Option value={4}>⭐⭐⭐⭐ Очень высокий</Option>
-              <Option value={5}>⭐⭐⭐⭐⭐ Мечта</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="category_ids" label="Категории">
-            <Select mode="multiple" placeholder="Выберите категории">
-              {categories.map((cat) => (
-                <Option key={cat.id} value={cat.id}>
-                  {cat.icon} {cat.name}
-                </Option>
-              ))}
-            </Select>
           </Form.Item>
 
           <Form.Item>

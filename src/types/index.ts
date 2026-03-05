@@ -13,8 +13,6 @@ export interface Wishlist {
   title: string;
   description?: string;
   is_public: boolean;
-  cover_image?: string;
-  occasion?: string;
   event_date?: string;
   created_at: string;
   updated_at: string;
@@ -62,9 +60,7 @@ export interface Comment {
 export interface CreateWishlistDTO {
   title: string;
   description?: string;
-  is_public?: boolean;
-  cover_image?: string;
-  occasion?: string;
+  is_public: boolean;
   event_date?: string;
 }
 

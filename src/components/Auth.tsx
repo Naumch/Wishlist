@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card, Form, Input, Button, Tabs, message } from "antd";
 import { MailOutlined, LockOutlined, UserOutlined } from "@ant-design/icons";
 import { supabase } from "../services/supabase";
 
 const { TabPane } = Tabs;
 
-const SimpleAuth: React.FC = () => {
+const SimpleAuth = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
 
